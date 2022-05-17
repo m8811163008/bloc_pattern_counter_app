@@ -1,3 +1,4 @@
+import 'package:bloc_pattern_counter_app/flutter_bloc/counter_cubit_b.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -15,8 +16,15 @@ class CounterApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      home: BlocProvider(
-        create: (_) => CounterCubit(),
+      home: MultiBlocProvider(
+        providers: [
+          BlocProvider(
+            create: (_) => CounterCubit(),
+          ),
+          BlocProvider<CounterCubitB>(
+            create: (_) => CounterCubitB(),
+          )
+        ],
         child: const CounterPage(),
       ),
     );
@@ -82,6 +90,33 @@ class CounterPage extends StatelessWidget {
             builder: (context, booleanState) =>
                 Text('the isEven is $booleanState'),
           ),
+          MultiBlocListener(
+            listeners: [
+              BlocListener<CounterCubit, int>(
+                listener: (context, state) => showDialog(
+                  context: context,
+                  builder: (_) => Dialog(
+                    child: Text(context.read<CounterCubit>().state.toString()),
+                  ),
+                ),
+                listenWhen: (prev, current) => current.isEven,
+              ),
+              BlocListener<CounterCubitB, String>(
+                listener: (context, state) => showDialog(
+                  context: context,
+                  builder: (_) => Dialog(
+                    child: Text(
+                      context.read<CounterCubitB>().state.toString(),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+            child: Text('This is child of multiBlocListener'),
+          ),
+          BlocBuilder<CounterCubitB, String>(
+            builder: (context, state) => Text(state),
+          )
         ],
       ),
       floatingActionButton: Column(
@@ -96,6 +131,12 @@ class CounterPage extends StatelessWidget {
           FloatingActionButton(
             onPressed: () => context.read<CounterCubit>().decrement(),
             child: const Icon(Icons.remove),
+          ),
+          const SizedBox(height: 4),
+          FloatingActionButton(
+            onPressed: () =>
+                context.read<CounterCubitB>().changeState('new state passed!'),
+            child: const Icon(Icons.info),
           ),
         ],
       ),
